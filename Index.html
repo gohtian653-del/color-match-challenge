@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Color Match Challenge</title>
+  <style>
+    *{box-sizing:border-box}
+    body{margin:0;padding:18px;min-height:100vh;display:grid;place-items:center;background:linear-gradient(135deg,#fff2d7,#f8e4ff);font-family:Arial,sans-serif;color:#40334c}
+    .game{width:min(720px,100%);background:#fff;border-radius:24px;padding:clamp(18px,4vw,30px);box-shadow:0 10px 30px #68408022}
+    h1{text-align:center;color:#8748a7;margin:0 0 8px;font-size:clamp(24px,5vw,34px)}
+    .intro{text-align:center;margin:0 0 18px}
+    .score{background:#f4eaff;border-radius:12px;padding:12px;font-weight:bold;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+    .cols{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:22px}
+    h2{font-size:18px;margin:0 0 10px}
+    .pick{display:block;width:100%;padding:16px 8px;margin:0 0 10px;border:2px solid #e6d9ef;border-radius:14px;background:#fff;font-size:17px;font-weight:bold;cursor:pointer;color:#40334c;min-height:58px}
+    .pick:focus-visible,.reset:focus-visible{outline:3px solid #e5a928;outline-offset:2px}
+    .pick.sel{background:#f1e4ff;border-color:#8748a7}
+    .pick.ok{background:#e6ffef;border-color:#38a66a;color:#17623b;cursor:default}
+    .pick.bad{background:#fff0f0;border-color:#d66}
+    .pick:disabled{opacity:1}
+    .msg{text-align:center;min-height:28px;font-weight:bold;margin:14px 0}
+    .reset{display:block;margin:auto;border:0;border-radius:30px;padding:12px 24px;background:#8748a7;color:white;font-weight:bold;cursor:pointer;font-size:15px}
+    .win{display:none;text-align:center;background:#fff6d9;border-radius:14px;padding:14px;margin-top:16px}
+    @media(max-width:480px){body{padding:8px}.game{padding:16px}.cols{gap:9px}.pick{font-size:15px;padding:13px 5px}}
+  </style>
+</head>
+<body>
+<main class="game">
+  <h1>🎨 Color Match Challenge</h1>
+  <p class="intro">Padankan campuran warna dengan hasil yang betul!</p>
+  <div class="score" aria-live="polite">
+    <span>⭐ Markah: <b id="score">0</b>/3</span>
+    <span>Padanan betul: <b id="done">0</b>/3</span>
+  </div>
+  <div class="cols">
+    <section>
+      <h2>Campuran Warna</h2>
+      <button class="pick" type="button" data-side="mix" data-id="1">Merah + Kuning</button>
+      <button class="pick" type="button" data-side="mix" data-id="2">Kuning + Biru</button>
+      <button class="pick" type="button" data-side="mix" data-id="3">Biru + Merah</button>
+    </section>
+    <section>
+      <h2>Hasil Campuran</h2>
+      <button class="pick" type="button" data-side="result" data-id="3">Ungu</button>
+      <button class="pick" type="button" data-side="result" data-id="1">Jingga</button>
+      <button class="pick" type="button" data-side="result" data-id="2">Hijau</button>
+    </section>
+  </div>
+  <p class="msg" id="msg" aria-live="polite">Pilih satu campuran warna, kemudian pilih hasil yang sepadan.</p>
+  <button class="reset" id="reset" type="button">Cuba Semula</button>
+  <div class="win" id="win" role="status">
+    <h2>🎉 Syabas, murid-murid!</h2>
+    <p>Kamu berjaya memadankan semua warna dengan betul!</p>
+  </div>
+</main>
+<script>
+(() => {
+  const items = [...document.querySelectorAll('.pick')];
+  const msg = document.getElementById('msg');
+  let selected = null;
+  let completed = 0;
+
+  function choose(item) {
+    if (item.disabled) return;
+
+    if (!selected) {
+      if (item.dataset.side === 'result') {
+        msg.textContent = 'Pilih campuran warna dahulu.';
+        return;
+      }
+      selected = item;
+      selected.classList.add('sel');
+      msg.textContent = 'Bagus! Sekarang pilih hasil campuran yang betul.';
+      return;
+    }
+
+    if (item.dataset.side === 'mix') {
+      selected.classList.remove('sel');
+      selected = item;
+      selected.classList.add('sel');
+      msg.textContent = 'Sekarang pilih hasil campuran yang betul.';
+      return;
+    }
+
+    if (selected.dataset.id === item.dataset.id) {
+      selected.classList.remove('sel');
+      selected.classList.add('ok');
+      item.classList.add('ok');
+      selected.disabled = true;
+      item.disabled = true;
+      completed++;
+      document.getElementById('score').textContent = completed;
+      document.getElementById('done').textContent = completed;
+      msg.textContent = 'Betul! Hebat! 🌟';
+      if (completed === 3) {
+        document.getElementById('win').style.display = 'block';
+        msg.textContent = 'Semua padanan betul! Tahniah!';
+      }
+    } else {
+      item.classList.add('bad');
+      msg.textContent = 'Belum tepat. Cuba lagi, ya!';
+      setTimeout(() => item.classList.remove('bad'), 650);
+      selected.classList.remove('sel');
+    }
+    selected = null;
+  }
+
+  items.forEach(item => item.addEventListener('click', () => choose(item)));
+
+  document.getElementById('reset').addEventListener('click', () => {
+    selected = null;
+    completed = 0;
+    items.forEach(item => {
+      item.disabled = false;
+      item.className = 'pick';
+    });
+    document.getElementById('score').textContent = '0';
+    document.getElementById('done').textContent = '0';
+    document.getElementById('win').style.display = 'none';
+    msg.textContent = 'Pilih satu campuran warna, kemudian pilih hasil yang sepadan.';
+  });
+})();
+</script>
+</body>
+</html>
